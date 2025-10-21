@@ -213,7 +213,11 @@ def generate_response_and_extract_facts(user_message: str, context: str) -> dict
 
 Task: 
 1. Respond naturally to the user's message, using any relevant memories from context
-2. Extract ANY facts worth remembering about the user for future conversations
+2. Extract ONLY NEW facts worth remembering (don't duplicate existing memories!)
+
+IMPORTANT: Look at the context above - those are existing memories. 
+ONLY extract facts that are genuinely NEW and not already covered in the context.
+Don't extract the same information in different words!
 
 Respond with ONLY valid JSON in this exact format:
 {{
@@ -223,7 +227,7 @@ Respond with ONLY valid JSON in this exact format:
   ]
 }}
 
-Facts to extract:
+Facts to extract (only if NEW):
 - User preferences (likes, dislikes, favorites)
 - Personal info (name, location, job, hobbies, family)
 - Skills, knowledge, interests
@@ -231,7 +235,7 @@ Facts to extract:
 - Opinions, beliefs, values
 - Experiences, stories
 
-If no facts worth remembering, set "facts" to empty array [].
+If no NEW facts worth remembering, set "facts" to empty array [].
 
 JSON:"""
 
@@ -325,11 +329,17 @@ async def chat(request: ChatRequest):
     # 3. Single LLM call: generate response + extract facts
     result = generate_response_and_extract_facts(request.message, context)
     
-    # 4. Save extracted facts to memory
+    # 4. Save extracted facts to memory (with deduplication)
     memory_saved = False
     memories_saved_count = 0
     if request.save_to_memory and result['facts']:
         for fact in result['facts']:
+            # Check if similar fact already exists
+            existing = retrieve_memories(request.user_id, fact['content'], top_k=1, min_similarity=0.85)
+            if existing:
+                print(f"⚠️  Skipping duplicate: '{fact['content']}' (similar to: '{existing[0]['content']}')")
+                continue
+            
             save_memory(
                 request.user_id, 
                 fact['content'], 
@@ -341,6 +351,8 @@ async def chat(request: ChatRequest):
         
         if memories_saved_count > 0:
             print(f"💾 Saved {memories_saved_count} new memories for user {request.user_id}")
+        elif result['facts']:
+            print(f"⚠️  All facts were duplicates - nothing saved")
     
     return ChatResponse(
         response=result['response'],
