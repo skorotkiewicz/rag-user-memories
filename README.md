@@ -2,6 +2,11 @@
 
 An intelligent proxy for LLMs with long-term memory using PostgreSQL + pgvector. The system automatically extracts and remembers facts about users using AI, without hardcoded triggers.
 
+<details>
+    <summary>Screenshot</summary>
+    <img src="example.png" />
+</details>
+
 ## ✨ Key Features
 
 ### 🤖 **AI-Driven Fact Extraction**
