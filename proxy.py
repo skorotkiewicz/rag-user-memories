@@ -11,7 +11,6 @@ import json
 from contextlib import asynccontextmanager
 
 # === CONFIGURATION ===
-# EMBEDDING_MODEL = "sentence-transformers/all-MiniLM-L6-v2"
 EMBEDDING_MODEL = "google/embeddinggemma-300m"
 LLM_API_URL = "http://localhost:8000/v1"  # Your LLM or other AI
 LLM_MODEL = "llama-4-scout-17b"  # Your LLM model
